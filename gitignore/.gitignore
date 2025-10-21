@@ -1,2 +1,9 @@
-.env/
-node_modules/
+# Ignorar a pasta de dependências
+node_modules
+
+# Ignorar arquivos de ambiente (que contêm chaves e senhas)
+.env
+
+# Arquivos de log e cache que não precisam ir para o git
+npm-debug.log*
+yarn-debug.log*

@@ -1,5 +1,4 @@
-// src/services/medicoService.js
-const Medico = require('../models/medico');
+const Medico = require("../models/medico");
 
 async function findMedicos() {
   const medicos = await Medico.find();
@@ -13,7 +12,7 @@ async function findMedicoById(id) {
 
 async function createMedico(dados) {
   const medico = await Medico.create(dados);
-  return { data: medico };
+  return medico;
 }
 
 async function updateMedico(id, dados) {
@@ -31,5 +30,5 @@ module.exports = {
   findMedicoById,
   createMedico,
   updateMedico,
-  deleteMedico
+  deleteMedico,
 };
