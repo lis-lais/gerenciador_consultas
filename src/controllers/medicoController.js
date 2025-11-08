@@ -44,12 +44,12 @@ class MedicoController {
       const updatedMedico = await medicoService.update(id, dadosAtualizados);
 
       if (!updatedMedico)
-        return res.status(404).json({ error: "Médico não encontrado." });
+        return res.status(404).json({ message: "Médico não encontrado." });
 
-      return res.status(200).json(formatMedico(updatedMedico));
+      return res.status(200).json(updatedMedico);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ message: "Erro ao atualizar médico." });
     }
   }
 
