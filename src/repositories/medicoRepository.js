@@ -39,7 +39,7 @@ class MedicoRepository {
   }
 
   async update(id, data) {
-    return Medico.findByIdAndUpdate(id, data, { new: true });
+    return Medico.findByIdAndUpdate(id, dataAtualizada, { new: true });
   }
   async delete(id) {
     return Medico.findByIdAndDelete(id);

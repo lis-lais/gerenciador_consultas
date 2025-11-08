@@ -38,15 +38,17 @@ class MedicoController {
 
   async update(req, res) {
     try {
-      const updatedMedico = await medicoService.updateMedico(
-        req.params.id,
-        req.body
-      );
+      const { id } = req.params;
+      const dadosAtualizados = req.body;
+
+      const updatedMedico = await medicoService.update(id, dadosAtualizados);
+
       if (!updatedMedico)
         return res.status(404).json({ error: "Médico não encontrado." });
 
       return res.status(200).json(formatMedico(updatedMedico));
     } catch (error) {
+      console.error(error);
       return res.status(500).json({ error: error.message });
     }
   }

@@ -10,8 +10,8 @@ class MedicoService {
     return medicoRepository.findWithPaginationAndFilters(filters);
   }
 
-  async updateMedico(id, data) {
-    const updatedMedico = await medicoRepository.update(id, data);
+  async updateMedico(id, dataAtualizados) {
+    const updatedMedico = await medicoRepository.update(id, dataAtualizados);
     if (!updatedMedico) return null;
 
     // Atualizar automaticamente o nome/especialidade nas consultas associadas
