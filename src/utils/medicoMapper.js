@@ -1,11 +1,17 @@
-function formatMedico(m) {
+function formatMedico(medico) {
+  if (!medico) return {};
+
   return {
-    id: m._id ? m._id.toString() : m.id,
-    nome: m.nome,
-    especialidade: m.especialidade,
-    createdAt: m.createdAt,
-    updatedAt: m.updatedAt
+    id: medico._id?.toString() || medico.id?.toString() || null,
+    nome: medico.nome || null,
+    especialidade: medico.especialidade || null,
+    createdAt: medico.createdAt || null,
+    updatedAt: medico.updatedAt || null,
   };
 }
-function formatMedicos(list) { return list.map(formatMedico); }
+
+function formatMedicos(medicos = []) {
+  return medicos.map(formatMedico);
+}
+
 module.exports = { formatMedico, formatMedicos };

@@ -1,8 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const medicoSchema = new mongoose.Schema({
-  nome: { type: String, required: true, trim: true },
-  especialidade: { type: String, required: true, trim: true }
-}, { timestamps: true });
+const medicoSchema = new mongoose.Schema(
+  {
+    nome: { type: String, required: true, trim: true },
+    especialidade: { type: String, required: true, trim: true },
+  },
+  { timestamps: true, strict: true }
+);
 
-module.exports = mongoose.model('Medico', medicoSchema);
+const Medico = mongoose.model("Medico", medicoSchema);
+
+module.exports = Medico;

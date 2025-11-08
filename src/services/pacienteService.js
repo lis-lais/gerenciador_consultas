@@ -1,35 +1,42 @@
-// src/services/pacienteService.js
-const Paciente = require('../models/paciente');
+const pacienteRepository = require("../repositories/pacienteRepository");
+const consultaRepository = require("../repositories/consultaRepository");
 
-async function findPacientes() {
-  const pacientes = await Paciente.find();
-  return { data: pacientes };
+class PacienteService {
+  async createPaciente(data) {
+    return pacienteRepository.create(data);
+  }
+
+  async findPacientes(filters) {
+    return pacienteRepository.findWithPaginationAndFilters(filters);
+  }
+
+  async updatePaciente(id, data) {
+    const updatedPaciente = await pacienteRepository.update(id, data);
+    if (!updatedPaciente) return null;
+
+    // Atualizar automaticamente o nome/dataNascimento nas consultas associadas
+    await consultaRepository.updateMany(
+      { idPaciente: id },
+      {
+        $set: {
+          "idPaciente.nome": data.nome,
+          "idPaciente.dataNascimento": data.dataNascimento,
+        },
+      }
+    );
+
+    return updatedPaciente;
+  }
+
+  async deletePaciente(id) {
+    const deletedPaciente = await pacienteRepository.delete(id);
+    if (!deletedPaciente) return null;
+
+    // 🗑️ Deletar todas as consultas do paciente removido
+    await consultaRepository.deleteMany({ idPaciente: id });
+
+    return deletedPaciente;
+  }
 }
 
-async function findPacienteById(id) {
-  const paciente = await Paciente.findById(id);
-  return paciente; // aqui não precisa {data}, porque seu relatorioRoutes espera direto o objeto
-}
-
-async function createPaciente(dados) {
-  const paciente = await Paciente.create(dados);
-  return { data: paciente };
-}
-
-async function updatePaciente(id, dados) {
-  const paciente = await Paciente.findByIdAndUpdate(id, dados, { new: true });
-  return { data: paciente };
-}
-
-async function deletePaciente(id) {
-  await Paciente.findByIdAndDelete(id);
-  return { message: `Paciente ${id} removido com sucesso` };
-}
-
-module.exports = {
-  findPacientes,
-  findPacienteById,
-  createPaciente,
-  updatePaciente,
-  deletePaciente
-};
+module.exports = new PacienteService();

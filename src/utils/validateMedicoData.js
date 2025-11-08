@@ -1,7 +1,9 @@
-function validateMedico({ nome, especialidade }) {
-  const missing = [];
-  if (!nome || String(nome).trim() === '') missing.push('nome');
-  if (!especialidade || String(especialidade).trim() === '') missing.push('especialidade');
-  return missing;
+function validateMedicoData({ nome, especialidade }) {
+  const missingFields = [];
+
+  if (!nome || String(nome).trim() === "") missingFields.push("nome");
+  if (!especialidade || String(especialidade).trim() === "")
+    missingFields.push("especialidade");
+  return missingFields;
 }
-module.exports = validateMedico;
+module.exports = validateMedicoData;

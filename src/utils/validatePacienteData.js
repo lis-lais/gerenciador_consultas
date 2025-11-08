@@ -1,7 +1,10 @@
-function validatePaciente({ nome, dataNascimento }) {
-  const missing = [];
-  if (!nome || String(nome).trim() === '') missing.push('nome');
-  if (!dataNascimento) missing.push('dataNascimento');
-  return missing;
+function validatePacienteData({ nome, dataNascimento }) {
+  const missingFields = [];
+
+  if (!nome || String(nome).trim() === "") missingFields.push("nome");
+  if (!dataNascimento) missingFields.push("dataNascimento");
+
+  return missingFields;
 }
-module.exports = validatePaciente;
+
+module.exports = validatePacienteData;

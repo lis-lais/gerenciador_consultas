@@ -1,43 +1,90 @@
-const Consulta = require('../models/Consulta');
+const Consulta = require("../models/consulta");
 
 class ConsultaRepository {
-  async create(data) {
-    return Consulta.create(data);
+  async create(consulta) {
+    return Consulta.create(consulta);
   }
-  async findWithFilters(filters) {
-    const { data: dataFilter, idMedico, idPaciente, descricao, page = 1, limit = 10 } = filters;
-    const query = {};
-
-    if (dataFilter) {
-      const d = new Date(dataFilter);
-      if (!isNaN(d.getTime())) {
-        // buscar por mesmo dia (ignorando horário)
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-        query.data = { $gte: start, $lte: end };
-      } else {
-        // se dataFilter não for data válida, deixamos sem filtro por data
-      }
-    }
-
-    if (idMedico) query.idMedico = idMedico;
-    if (idPaciente) query.idPaciente = idPaciente;
-    if (descricao) query.descricao = new RegExp(descricao, 'i');
+  async findWithPaginationAndFilters(filters) {
+    const {
+      term,
+      data: dataFilter,
+      idMedico,
+      idPaciente,
+      descricao,
+      page = 1,
+      limit = 10,
+    } = filters;
 
     const parsedPage = Math.max(1, parseInt(page, 10) || 1);
     const parsedLimit = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
     const skip = (parsedPage - 1) * parsedLimit;
-    const [data, totalItems] = await Promise.all([
-      Consulta.find(query).skip(skip).limit(parsedLimit).sort({ createdAt: -1 }),
-      Consulta.countDocuments(query)
+
+    const query = {};
+
+    // 🔍 Filtro de termo (busca genérica)
+    if (term) {
+      const regex = new RegExp(term, "i");
+      query.$or = [{ descricao: regex }];
+    }
+
+    // 🔍 Filtro de data
+    if (dataFilter) {
+      const d = new Date(dataFilter);
+      if (!isNaN(d.getTime())) {
+        const start = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+          0,
+          0,
+          0,
+          0
+        );
+        const end = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+          23,
+          59,
+          59,
+          999
+        );
+        query.data = { $gte: start, $lte: end };
+      }
+    }
+    // 🔍 Filtros básicos
+    if (idMedico) query.idMedico = idMedico;
+    if (idPaciente) query.idPaciente = idPaciente;
+    if (descricao) query.descricao = new RegExp(descricao, "i");
+
+    // ⚙️ Popula os dados e faz paginação
+    const [consultas, totalItems] = await Promise.all([
+      Consulta.find(query)
+        .populate("idMedico")
+        .populate("idPaciente")
+        .skip(skip)
+        .limit(parsedLimit)
+        .sort({ createdAt: -1 }),
+      Consulta.countDocuments(query),
     ]);
-    return { data, page: parsedPage, limit: parsedLimit, totalItems, totalPages: Math.ceil(totalItems / parsedLimit) };
+
+    const totalPages = Math.ceil(totalItems / parsedLimit);
+    const hasMore = parsedPage < totalPages;
+
+    return {
+      data: consultas,
+      page: parsedPage,
+      limit: parsedLimit,
+      totalItems,
+      totalPages,
+      hasMore,
+    };
   }
-  async findById(id) {
-    return Consulta.findById(id);
-  }
-  async update(id, payload) {
-    return Consulta.findByIdAndUpdate(id, payload, { new: true });
+
+  async update(id, data) {
+    return Consulta.findByIdAndUpdate(id, data, { new: true })
+      .populate("idMedico")
+      .populate("idPaciente");
   }
   async delete(id) {
     return Consulta.findByIdAndDelete(id);

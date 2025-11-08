@@ -1,28 +1,45 @@
-const Medico = require('../models/medico');
+const Medico = require("../models/medico");
 
 class MedicoRepository {
-  async create(data) {
-    return Medico.create(data);
+  async create(medico) {
+    return Medico.create(medico);
   }
-  async findWithFilters(filters) {
-    const { nome, especialidade, page = 1, limit = 10 } = filters;
-    const query = {};
-    if (nome) query.nome = new RegExp(nome, 'i');
-    if (especialidade) query.especialidade = new RegExp(especialidade, 'i');
+  async findWithPaginationAndFilters(filters) {
+    const { term, nome, especialidade, page = 1, limit = 10 } = filters;
+
     const parsedPage = Math.max(1, parseInt(page, 10) || 1);
     const parsedLimit = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
     const skip = (parsedPage - 1) * parsedLimit;
-    const [data, totalItems] = await Promise.all([
+
+    const query = {};
+
+    if (term) {
+      const regex = new RegExp(term, "i");
+      query.$or = [{ nome: regex }, { especialidade: regex }];
+    }
+    if (nome) query.nome = new RegExp(nome, "i");
+    if (especialidade) query.especialidade = new RegExp(especialidade, "i");
+
+    const [medicos, totalItems] = await Promise.all([
       Medico.find(query).skip(skip).limit(parsedLimit).sort({ createdAt: -1 }),
-      Medico.countDocuments(query)
+      Medico.countDocuments(query),
     ]);
-    return { data, page: parsedPage, limit: parsedLimit, totalItems, totalPages: Math.ceil(totalItems / parsedLimit) };
+
+    const totalPages = Math.ceil(totalItems / parsedLimit);
+    const hasMore = parsedPage < totalPages;
+
+    return {
+      data: medicos,
+      page: parsedPage,
+      limit: parsedLimit,
+      totalItems,
+      totalPages,
+      hasMore,
+    };
   }
-  async findById(id) {
-    return Medico.findById(id);
-  }
-  async update(id, payload) {
-    return Medico.findByIdAndUpdate(id, payload, { new: true });
+
+  async update(id, data) {
+    return Medico.findByIdAndUpdate(id, data, { new: true });
   }
   async delete(id) {
     return Medico.findByIdAndDelete(id);

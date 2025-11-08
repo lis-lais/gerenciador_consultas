@@ -1,35 +1,23 @@
-// src/services/consultaService.js
-const Consulta = require('../models/consulta');
+const consultaRepository = require("../repositories/consultaRepository");
 
-async function findConsultas(filtros = {}) {
-  const consultas = await Consulta.find(filtros);
-  return { data: consultas };
+class ConsultaService {
+  async createConsulta(data) {
+    const consulta = await consultaRepository.create(data);
+    return consulta;
+  }
+
+  async findConsultas(filters) {
+    return consultaRepository.findWithPaginationAndFilters(filters);
+  }
+
+  async updateConsulta(id, data) {
+    const updatedConsulta = await consultaRepository.update(id, data);
+    return updatedConsulta;
+  }
+
+  async deleteConsulta(id) {
+    return consultaRepository.delete(id);
+  }
 }
 
-async function createConsulta(dados) {
-  const consulta = await Consulta.create(dados);
-  return { data: consulta };
-}
-
-async function findConsultaById(id) {
-  const consulta = await Consulta.findById(id);
-  return { data: consulta };
-}
-
-async function updateConsulta(id, dados) {
-  const consulta = await Consulta.findByIdAndUpdate(id, dados, { new: true });
-  return { data: consulta };
-}
-
-async function deleteConsulta(id) {
-  await Consulta.findByIdAndDelete(id);
-  return { message: `Consulta ${id} removida com sucesso` };
-}
-
-module.exports = {
-  findConsultas,
-  createConsulta,
-  findConsultaById,
-  updateConsulta,
-  deleteConsulta
-};
+module.exports = new ConsultaService();

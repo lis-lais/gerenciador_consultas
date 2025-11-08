@@ -1,34 +1,42 @@
-const Medico = require("../models/medico");
+const medicoRepository = require("../repositories/medicoRepository");
+const consultaRepository = require("../repositories/consultaRepository");
 
-async function findMedicos() {
-  const medicos = await Medico.find();
-  return { data: medicos };
+class MedicoService {
+  async createMedico(data) {
+    return medicoRepository.create(data);
+  }
+
+  async findMedicos(filters) {
+    return medicoRepository.findWithPaginationAndFilters(filters);
+  }
+
+  async updateMedico(id, data) {
+    const updatedMedico = await medicoRepository.update(id, data);
+    if (!updatedMedico) return null;
+
+    // Atualizar automaticamente o nome/especialidade nas consultas associadas
+    await consultaRepository.updateMany(
+      { idMedico: id },
+      {
+        $set: {
+          "idMedico.nome": data.nome,
+          "idMedico.especialidade": data.especialidade,
+        },
+      }
+    );
+
+    return updatedMedico;
+  }
+
+  async deleteMedico(id) {
+    const deletedMedico = await medicoRepository.delete(id);
+    if (!deletedMedico) return null;
+
+    // 🗑️ Deletar todas as consultas do médico removido
+    await consultaRepository.deleteMany({ idMedico: id });
+
+    return deletedMedico;
+  }
 }
 
-async function findMedicoById(id) {
-  const medico = await Medico.findById(id);
-  return medico; // igual ao paciente, retorna direto para o relatorioRoutes
-}
-
-async function createMedico(dados) {
-  const medico = await Medico.create(dados);
-  return medico;
-}
-
-async function updateMedico(id, dados) {
-  const medico = await Medico.findByIdAndUpdate(id, dados, { new: true });
-  return { data: medico };
-}
-
-async function deleteMedico(id) {
-  await Medico.findByIdAndDelete(id);
-  return { message: `Médico ${id} removido com sucesso` };
-}
-
-module.exports = {
-  findMedicos,
-  findMedicoById,
-  createMedico,
-  updateMedico,
-  deleteMedico,
-};
+module.exports = new MedicoService();

@@ -1,11 +1,15 @@
-function formatPaciente(p) {
+function formatPaciente(paciente) {
+  if (!paciente) return {};
   return {
-    id: p._id ? p._id.toString() : p.id,
-    nome: p.nome,
-    dataNascimento: p.dataNascimento,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt
+    id: paciente._id?.toString() || paciente.id,
+    nome: paciente.nome,
+    dataNascimento: paciente.dataNascimento,
   };
 }
-function formatPacientes(list) { return list.map(formatPaciente); }
+
+function formatPacientes(pacientes) {
+  if (!Array.isArray(pacientes)) return [];
+  return pacientes.map(formatPaciente);
+}
+
 module.exports = { formatPaciente, formatPacientes };

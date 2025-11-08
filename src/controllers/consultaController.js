@@ -1,62 +1,104 @@
-const consultaService = require('../services/consultaService');
-const { formatConsulta, formatConsultas } = require('../utils/consultaMapper');
-const validateConsulta = require('../utils/validateConsultaData');
+const consultaService = require("../services/consultaService");
+const { formatConsulta, formatConsultas } = require("../utils/consultaMapper");
+const validateConsulta = require("../utils/validateConsultaData");
 
 class ConsultaController {
+  toDTO(consulta) {
+    return {
+      id: consulta._id.toString(),
+      data: consulta.data,
+      descricao: consulta.descricao,
+
+      medico: consulta.idMedico
+        ? {
+            id:
+              consulta.idMedico._id?.toString() || consulta.idMedico.toString(),
+            nome: consulta.idMedico.nome || null,
+            especialidade: consulta.idMedico.especialidade || null,
+          }
+        : null,
+
+      paciente: consulta.idPaciente
+        ? {
+            id:
+              consulta.idPaciente._id?.toString() ||
+              consulta.idPaciente.toString(),
+            nome: consulta.idPaciente.nome || null,
+            dataNascimento: consulta.idPaciente.dataNascimento || null,
+          }
+        : null,
+    };
+  }
+
   async create(req, res) {
     try {
       const missing = validateConsulta(req.body);
-      if (missing.length) return res.status(400).json({ error: 'Campos obrigatórios: ' + missing.join(', ') });
-      const consulta = await consultaService.createConsulta(req.body);
-      res.status(201).json(formatConsulta(consulta));
-    } catch (err) {
+      if (missing.length > 0) {
+        return res
+          .status(400)
+          .json({ error: "Campos obrigatórios: " + missing.join(", ") });
+      }
+
+      const consultaCriada = await consultaService.createConsulta(req.body);
+      return res.status(201).json(this.toDTO(consultaCriada));
+    } catch (error) {
       // service lança erro se medico/paciente não existir
-      res.status(400).json({ error: err.message });
+      return res.status(500).json({ error: error.message });
     }
   }
 
-  async list(req, res) {
+  async listAndSearch(req, res) {
     try {
-      const result = await consultaService.findConsultas(req.query);
-      res.json({
-        data: formatConsultas(result.data),
-        page: result.page,
-        limit: result.limit,
-        totalItems: result.totalItems,
-        totalPages: result.totalPages
+      const { data, page, limit, totalPages, totalItems } =
+        await consultaService.findConsultas(req.query);
+
+      if (data.length === 0) {
+        return res.status(200).json({
+          message: "Nenhuma consulta encontrada com os critérios fornecidos.",
+        });
+      }
+
+      return res.status(200).json({
+        data: formatConsultas(data),
+        page,
+        limit,
+        totalItems,
+        totalPages,
       });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-
-  async findById(req, res) {
-    try {
-      const consulta = await consultaService.findConsultaById(req.params.id);
-      if (!consulta) return res.status(404).json({ error: 'Consulta não encontrada' });
-      res.json(formatConsulta(consulta));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao listar consulta." });
     }
   }
 
   async update(req, res) {
     try {
-      const updated = await consultaService.updateConsulta(req.params.id, req.body);
-      if (!updated) return res.status(404).json({ error: 'Consulta não encontrada' });
-      res.json(formatConsulta(updated));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      const updatedConsulta = await consultaService.updateConsulta(
+        req.params.id,
+        req.body
+      );
+      if (!updatedConsulta) {
+        return res.status(404).json({ error: "Consulta não encontrada" });
+      }
+      return res.json(200).json(formatConsulta(updatedConsulta));
+    } catch (error) {
+      console.log("Erro ao atualizar a consulta.");
+      return res.status(500).json({ error: error.message });
     }
   }
 
   async delete(req, res) {
     try {
-      const deleted = await consultaService.deleteConsulta(req.params.id);
-      if (!deleted) return res.status(404).json({ error: 'Consulta não encontrada' });
-      res.json(formatConsulta(deleted));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      const id = req.params.id;
+      const deletedConsulta = await consultaService.deleteConsulta(id);
+      if (!deletedConsulta) {
+        return res.status(404).json({ error: "Consulta não encontrada" });
+      }
+      res.json({
+        ...formatConsulta(deletedConsulta),
+        message: "Consulta deletada com sucesso.",
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 }

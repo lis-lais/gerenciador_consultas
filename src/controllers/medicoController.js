@@ -6,64 +6,63 @@ class MedicoController {
   async create(req, res) {
     try {
       const missing = validateMedico(req.body);
-      if (missing.length > 0) {
+      if (missing.length > 0)
         return res
           .status(400)
           .json({ error: `Campos obrigatórios: ${missing.join(", ")}` });
-      }
+
       const medico = await medicoService.createMedico(req.body);
-      console.log("MEDICO CRIADO ===>", medico);
-      res.status(201).json(formatMedico(medico));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      return res.status(201).json(formatMedico(medico));
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
     }
   }
 
-  async list(req, res) {
+  async listAndSearch(req, res) {
     try {
       const result = await medicoService.findMedicos(req.query);
-      res.json({
+      if (result.data.length === 0)
+        return res.status(200).json({ message: "Nenhum médico encontrado." });
+
+      return res.json({
         data: formatMedicos(result.data),
         page: result.page,
         limit: result.limit,
         totalItems: result.totalItems,
         totalPages: result.totalPages,
       });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-
-  async findById(req, res) {
-    try {
-      const medico = await medicoService.findMedicoById(req.params.id);
-      if (!medico)
-        return res.status(404).json({ error: "Médico não encontrado" });
-      res.json(formatMedico(medico));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao listar médicos." });
     }
   }
 
   async update(req, res) {
     try {
-      const updated = await medicoService.updateMedico(req.params.id, req.body);
-      if (!updated)
-        return res.status(404).json({ error: "Médico não encontrado" });
-      res.json(formatMedico(updated));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      const updatedMedico = await medicoService.updateMedico(
+        req.params.id,
+        req.body
+      );
+      if (!updatedMedico)
+        return res.status(404).json({ error: "Médico não encontrado." });
+
+      return res.status(200).json(formatMedico(updatedMedico));
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 
   async delete(req, res) {
     try {
-      const deleted = await medicoService.deleteMedico(req.params.id);
-      if (!deleted)
+      const deletedMedico = await medicoService.deleteMedico(req.params.id);
+      if (!deletedMedico)
         return res.status(404).json({ error: "Médico não encontrado" });
-      res.json(formatMedico(deleted));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+
+      return res.json({
+        ...formatMedico(deletedMedico),
+        message: "Médico deletado com sucesso.",
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 }
